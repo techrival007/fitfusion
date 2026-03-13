@@ -1,0 +1,39 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: 'JetBrains Mono', monospace;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #F3F4F6;
+  color: #111827;
+  margin: 0;
+  padding: 0;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #F3F4F6;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+.recharts-tooltip-wrapper {
+  font-family: 'JetBrains Mono', monospace !important;
+}
+
+.recharts-text {
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 10px !important;
+}
