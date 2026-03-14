@@ -1,8 +1,9 @@
 import { useAdminAuth } from '../../context/AdminAuthContext'
 import { getActivityReport, environmentalData } from '../../data/mockData'
+import { getWardenActivity } from '../../api/warden'
 import InsightCard from '../../components/InsightCard'
 import SectionHeader from '../../components/SectionHeader'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine,
   BarChart, Bar, ComposedChart, Area, Legend
@@ -24,9 +25,32 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function ActivityReport() {
   const { user } = useAdminAuth()
-  const hostelName = user?.hostelId || 'BH-3'
+  const hostelName = user?.hostel_id || user?.hostelId || 'BH-3'
   const [range, setRange] = useState('28')
-  const data = getActivityReport(hostelName, parseInt(range))
+  const [data, setData] = useState(() => getActivityReport(hostelName, 28))
+
+  useEffect(() => {
+    const rangeMap = { '7': '7d', '14': '14d', '28': '30d' }
+    getWardenActivity({ range: rangeMap[range] || '30d' }).then(api => {
+      const daily = (api.daily_trend || []).map(d => ({
+        date: d.date,
+        avgMinutes: d.avg_minutes,
+        participation: d.participation_pct,
+      }))
+      if (daily.length > 0) {
+        setData(prev => ({
+          ...prev,
+          dailyTrend: daily,
+          weeklyAQI: (api.indoor_outdoor || prev.weeklyAQI || []).map((item, index) => ({
+            week: item.week ? `W${index + 1}` : `W${index + 1}`,
+            indoor: item.indoor_min ?? item.indoor,
+            outdoor: item.outdoor_min ?? item.outdoor,
+            aqi: item.avg_aqi ?? item.aqi,
+          })),
+        }))
+      }
+    }).catch(() => {})
+  }, [range])
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">

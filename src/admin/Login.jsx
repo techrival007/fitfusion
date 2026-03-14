@@ -4,9 +4,9 @@ import { useAdminAuth } from '../context/AdminAuthContext'
 import { Activity, Eye, EyeOff, ArrowRight } from 'lucide-react'
 
 const DEMO_CREDS = [
-  { email: 'warden@bh3.edu', password: 'warden123', role: 'Warden', hostel: 'BH-3' },
-  { email: 'mess@campus.edu', password: 'mess123', role: 'Mess Manager', hostel: 'Campus' },
-  { email: 'dean@campus.edu', password: 'dean123', role: 'Dean of Students', hostel: 'All Hostels' },
+  { email: 'warden.bh3@iitd.ac.in', password: 'admin123', role: 'Warden', hostel: 'BH-3' },
+  { email: 'mess@iitd.ac.in',        password: 'admin123', role: 'Mess Manager', hostel: 'Campus' },
+  { email: 'dean@iitd.ac.in',        password: 'admin123', role: 'Dean of Students', hostel: 'All Hostels' },
 ]
 
 export default function AdminLogin() {
@@ -17,14 +17,14 @@ export default function AdminLogin() {
   const { login } = useAdminAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const result = login(email, password)
+    const result = await login(email, password)
     if (result.success) {
       const roleRoutes = { warden: '/admin/warden', mess_manager: '/admin/mess', dean: '/admin/dean' }
       navigate(roleRoutes[result.role])
     } else {
-      setError('Invalid credentials. Use the demo accounts below.')
+      setError(result.error || 'Invalid credentials. Use the demo accounts below.')
     }
   }
 

@@ -1,6 +1,7 @@
 import { mealRatingsData, feedbackTags } from '../../data/mockData'
+import { getMessRatings } from '../../api/mess'
 import SectionHeader from '../../components/SectionHeader'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 function StarDisplay({ rating }) {
   return (
@@ -13,8 +14,26 @@ function StarDisplay({ rating }) {
 export default function MealRatings() {
   const [filter, setFilter] = useState('all')
   const [sortKey, setSortKey] = useState('date')
+  const [apiTable, setApiTable] = useState(null)
 
-  const flatRatings = mealRatingsData.flatMap(d =>
+  useEffect(() => {
+    getMessRatings({ range: '30d' }).then(data => { if (data.table?.length) setApiTable(data.table) }).catch(() => {})
+  }, [])
+
+  const apiTags = Array.isArray(apiTable) && apiTable.length
+    ? [...new Map(apiTable.filter((row) => row.top_tag).map((row) => [row.top_tag, row])).values()].map((row) => ({
+        tag: row.top_tag,
+        count: apiTable.filter((item) => item.top_tag === row.top_tag).reduce((sum, item) => sum + (item.n_ratings || 0), 0),
+        type: row.top_tag === 'tasty' ? 'positive' : 'negative',
+      }))
+    : feedbackTags
+
+  const flatRatings = apiTable
+    ? apiTable.map(r => ({
+        date: r.date, day: r.day_name, meal: r.meal_type,
+        rating: r.avg_rating, count: r.n_ratings, tag: r.top_tag,
+      }))
+    : mealRatingsData.flatMap(d =>
     ['breakfast', 'lunch', 'snacks', 'dinner'].map(m => ({
       date: d.date,
       day: d.day,
@@ -23,7 +42,7 @@ export default function MealRatings() {
       count: d[m].count,
       tag: d[m].tag,
     }))
-  )
+    )
 
   const filtered = filter === 'all' ? flatRatings : flatRatings.filter(r => r.meal.toLowerCase() === filter)
   const sorted = [...filtered].sort((a, b) => {
@@ -128,8 +147,8 @@ export default function MealRatings() {
       <div className="bg-white border border-[#E5E7EB] p-5">
         <SectionHeader title="Feedback Tag Distribution" subtitle="Frequency of each tag this month" />
         <div className="flex flex-wrap gap-2">
-          {feedbackTags.sort((a, b) => b.count - a.count).map(t => {
-            const maxCount = Math.max(...feedbackTags.map(x => x.count))
+          {[...apiTags].sort((a, b) => b.count - a.count).map(t => {
+            const maxCount = Math.max(...apiTags.map(x => x.count), 1)
             const size = 9 + Math.round((t.count / maxCount) * 6)
             return (
               <div key={t.tag} className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E7EB]"

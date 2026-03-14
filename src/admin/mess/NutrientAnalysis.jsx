@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { nutrientRDA, macroTrend } from '../../data/mockData'
+import { getMessNutrients } from '../../api/mess'
 import NutrientGauge from '../../components/NutrientGauge'
 import SectionHeader from '../../components/SectionHeader'
 import InsightCard from '../../components/InsightCard'
@@ -17,6 +19,39 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function NutrientAnalysis() {
+  const [apiData, setApiData] = useState(null)
+  useEffect(() => { getMessNutrients({ range: '30d' }).then(setApiData).catch(() => {}) }, [])
+
+  const gauges = apiData?.gauges
+    ? {
+        calories: { avg: apiData.gauges.calories.avg, rda: apiData.gauges.calories.rda, unit: 'kcal' },
+        protein: { avg: apiData.gauges.protein.avg, rda: apiData.gauges.protein.rda, unit: 'g' },
+        carbs: { avg: apiData.gauges.carbs.avg, rda: apiData.gauges.carbs.rda, unit: 'g' },
+        fat: { avg: apiData.gauges.fat.avg, rda: apiData.gauges.fat.rda, unit: 'g' },
+        fibre: { avg: apiData.gauges.fibre.avg, rda: apiData.gauges.fibre.rda, unit: 'g' },
+      }
+    : nutrientRDA
+  const macroData = apiData?.macro_trend?.length
+    ? apiData.macro_trend.map((row) => ({
+        week: row.week,
+        protein: row.protein_g,
+        fat: row.fat_g,
+        fibre: row.fibre_g ?? gauges.fibre.avg,
+      }))
+    : macroTrend
+
+  const recommendations = apiData?.recommendations?.length
+    ? apiData.recommendations.map((item) => ({
+        nutrient: item.nutrient,
+        text: item.message,
+        severity: item.nutrient === 'fibre' ? 'critical' : item.nutrient === 'protein' ? 'warning' : 'info',
+      }))
+    : [
+        { nutrient: 'Fibre (63% below RDA)', text: 'Campus fibre intake is significantly below recommended levels. High-fibre mess items to consider: rajma, chole, mixed dal, green vegetables, moong dal chilla, sabzi.', severity: 'critical' },
+        { nutrient: 'Protein (20% below RDA)', text: 'Protein intake is below target. Consider increasing frequency of: dal, paneer, eggs, curd, or rajma in the weekly menu.', severity: 'warning' },
+        { nutrient: 'Carbohydrates (20% below RDA)', text: 'Carbohydrate intake is slightly low. Adding more rice, roti, or khichdi servings during lunch and dinner can help bridge this gap.', severity: 'info' },
+      ]
+
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
       <div>
@@ -28,7 +63,7 @@ export default function NutrientAnalysis() {
       {/* Nutrient gauges */}
       <div className="bg-white border border-[#E5E7EB] p-5">
         <SectionHeader title="Campus Nutrient Intake vs RDA" subtitle="Current week campus average" />
-        {Object.entries(nutrientRDA).map(([key, v]) => (
+        {Object.entries(gauges).map(([key, v]) => (
           <NutrientGauge key={key} label={key.charAt(0).toUpperCase() + key.slice(1)} avg={v.avg} rda={v.rda} unit={v.unit} />
         ))}
       </div>
@@ -37,7 +72,7 @@ export default function NutrientAnalysis() {
       <div className="bg-white border border-[#E5E7EB] p-5">
         <SectionHeader title="12-Week Macro Trend" subtitle="Campus average grams per week" />
         <ResponsiveContainer width="100%" height={220}>
-          <LineChart data={macroTrend} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
+          <LineChart data={macroData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
             <XAxis dataKey="week" tick={{ fontSize: 9 }} />
             <YAxis tick={{ fontSize: 9 }} />
             <Tooltip content={<CustomTooltip />} />
@@ -60,11 +95,7 @@ export default function NutrientAnalysis() {
       <div className="bg-white border border-[#E5E7EB] p-5">
         <SectionHeader title="Auto-Generated Recommendations" subtitle="Based on current nutrient gaps" />
         <div className="space-y-3">
-          {[
-            { nutrient: 'Fibre (63% below RDA)', text: 'Campus fibre intake is significantly below recommended levels. High-fibre mess items to consider: rajma, chole, mixed dal, green vegetables, moong dal chilla, sabzi.', severity: 'critical' },
-            { nutrient: 'Protein (20% below RDA)', text: 'Protein intake is below target. Consider increasing frequency of: dal, paneer, eggs, curd, or rajma in the weekly menu.', severity: 'warning' },
-            { nutrient: 'Carbohydrates (20% below RDA)', text: 'Carbohydrate intake is slightly low. Adding more rice, roti, or khichdi servings during lunch and dinner can help bridge this gap.', severity: 'info' },
-          ].map(r => (
+          {recommendations.map(r => (
             <div key={r.nutrient} className={`border p-4 ${r.severity === 'critical' ? 'border-[#fecaca] bg-[#fef2f2]' : r.severity === 'warning' ? 'border-[#fde68a] bg-[#fffbeb]' : 'border-[#E5E7EB] bg-[#FAFAFA]'}`}>
               <p className={`text-[9px] font-bold uppercase tracking-widest mb-1 ${r.severity === 'critical' ? 'text-[#ef4444]' : r.severity === 'warning' ? 'text-[#f59e0b]' : 'text-[#9CA3AF]'}`}>{r.nutrient}</p>
               <p className="text-[11px] text-[#374151] leading-relaxed">{r.text}</p>

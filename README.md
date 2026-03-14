@@ -10,7 +10,8 @@ A context-aware campus wellness platform with two products: an admin analytics d
 - **Charts:** Recharts
 - **Icons:** Lucide React
 - **Routing:** React Router DOM v6
-- **Data:** Client-side mock data (no backend required)
+- **Backend:** FastAPI + PostgreSQL + optional Redis cache
+- **Data:** Mock data fallback plus live backend APIs
 
 ## Getting Started
 
@@ -21,15 +22,57 @@ npm run dev
 
 App runs at `http://localhost:5173` (or next available port).
 
+## Backend Setup
+
+The app now expects the FastAPI backend for auth, live environment, journal CRUD, and report downloads.
+
+```bash
+python -m venv backend/.venv
+backend/.venv/Scripts/pip install -r backend/requirements.txt
+npm run dev:backend
+```
+
+Required backend env in `backend/.env`:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `JOURNAL_ENCRYPTION_KEY`
+- `ACCUWEATHER_API_KEY`
+- `GEMINI_API_KEY`
+
+Optional backend env:
+
+- `ACCUWEATHER_LOCATION_KEY`
+- `ACCUWEATHER_LOCATION_QUERY`
+- `ACCUWEATHER_GEOPOSITION`
+- `ALLOWED_ORIGINS`
+- `ALLOWED_ORIGIN_REGEX`
+- `GEMINI_MODEL`
+
+Frontend API base can be overridden with `VITE_API_URL`; default is `http://localhost:8000`.
+
+For local Vite dev on fallback ports like `5174` or `127.0.0.1`, the backend also accepts localhost loopback origins through `ALLOWED_ORIGIN_REGEX` by default.
+
+The chatbot now uses the backend Gemini integration plus pre-generated analysis files in `src/diff/`:
+
+- `src/diff/json_analysis.json`
+- `src/diff/global_analysis.json`
+- `src/diff/student_analysis.json`
+- `src/diff/warden_analysis.json`
+- `src/diff/mess_manager_analysis.json`
+- `src/diff/dean_analysis.json`
+
+These are generated from the live PostgreSQL schema and row-level aggregates via `python backend/scripts/export_db_analysis.py`.
+
 ## Demo Credentials
 
 **Admin**
 
 | Role | Email | Password |
 |------|-------|----------|
-| Warden (BH-3) | warden@bh3.edu | warden123 |
-| Mess Manager | mess@campus.edu | mess123 |
-| Dean of Students | dean@campus.edu | dean123 |
+| Warden (BH-3) | warden.bh3@iitd.ac.in | admin123 |
+| Mess Manager | mess@iitd.ac.in | admin123 |
+| Dean of Students | dean@iitd.ac.in | admin123 |
 
 **Student**
 

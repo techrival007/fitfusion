@@ -1,7 +1,8 @@
 import { academicCorrelationData, branchWellnessTrend } from '../../data/mockData'
+import { getAcademicCorrelation } from '../../api/dean'
 import SectionHeader from '../../components/SectionHeader'
 import InsightCard from '../../components/InsightCard'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ResponsiveContainer, AreaChart, Area, LineChart, Line, ComposedChart, XAxis, YAxis, Tooltip, ReferenceLine, ReferenceArea
 } from 'recharts'
@@ -20,22 +21,36 @@ const EXAM_PERIODS = [{ start: 30, end: 37, label: 'Exam Week 1' }, { start: 70,
 
 export default function AcademicCorrelation() {
   const [selectedBranches, setSelectedBranches] = useState(['CSE', 'ECE', 'ME'])
+  const [apiData, setApiData] = useState(null)
   const BRANCH_COLORS = { CSE: '#111827', ECE: '#374151', ME: '#6B7280', CE: '#9CA3AF', EE: '#4B5563', Textile: '#D1D5DB', Chemical: '#E5E7EB', Mathematics: '#F3F4F6' }
 
-  const chartData = academicCorrelationData.map(d => ({
-    day: `D${d.day}`,
-    wellness: d.wellnessScore,
-    mood: d.moodScore,
-    stress: d.stressLevel,
-    sleep: d.sleepHours,
-    isExam: d.isExam,
+  useEffect(() => {
+    getAcademicCorrelation({ range: '90d' }).then(setApiData).catch(() => {})
+  }, [])
+
+  const chartData = (apiData?.daily_wellness || academicCorrelationData).map((d, i) => ({
+    day: d.day ? `D${d.day}` : `D${i + 1}`,
+    wellness: d.avg_score ?? d.wellnessScore,
+    mood: d.avg_mood ?? d.moodScore,
+    stress: d.avg_stress ?? d.stressLevel,
+    sleep: d.avg_sleep ?? d.sleepHours,
+    isExam: d.is_exam_day ?? d.isExam,
   }))
 
-  const findingCards = [
-    { title: 'Exam Impact', detail: 'Campus wellness score drops an average of 17.4 points during exam weeks. This is consistent across all 10 hostels.' },
-    { title: 'Recovery Rate', detail: 'Wellness scores recover to pre-exam baseline within 5 days after exams end — fastest recovery metric is activity levels.' },
-    { title: 'Sleep Impact', detail: 'Average sleep hours decline from 6.8 to 5.7 during exam weeks — the sharpest single metric decline on campus.' },
-  ]
+  const findingCards = apiData?.finding_cards?.length
+    ? apiData.finding_cards.map((c) => ({ title: c.title, detail: c.text || c.stat }))
+    : [
+        { title: 'Exam Impact', detail: 'Campus wellness score drops an average of 17.4 points during exam weeks. This is consistent across all 10 hostels.' },
+        { title: 'Recovery Rate', detail: 'Wellness scores recover to pre-exam baseline within 5 days after exams end — fastest recovery metric is activity levels.' },
+        { title: 'Sleep Impact', detail: 'Average sleep hours decline from 6.8 to 5.7 during exam weeks — the sharpest single metric decline on campus.' },
+      ]
+
+  const branchTrendSource = apiData?.branch_trends?.length
+    ? selectedBranches.map((branch) => ({
+        branch,
+        data: apiData.branch_trends.map((row, index) => ({ week: `W${index + 1}`, score: row[branch] ?? 0 })),
+      }))
+    : branchWellnessTrend
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -78,21 +93,21 @@ export default function AcademicCorrelation() {
         <div className="flex items-center justify-between mb-4">
           <SectionHeader title="Branch-Wise Wellness Trend" subtitle="Select branches to compare" />
           <div className="flex flex-wrap gap-1 max-w-xs justify-end">
-            {branchWellnessTrend.map(b => (
+            {(apiData?.branch_trends?.length ? Object.keys(apiData.branch_trends[0] || {}).filter((key) => key !== 'date') : branchWellnessTrend.map((b) => b.branch)).map(b => (
               <button
-                key={b.branch}
-                onClick={() => setSelectedBranches(prev => prev.includes(b.branch) ? prev.filter(x => x !== b.branch) : [...prev, b.branch])}
-                className={`px-2 py-0.5 text-[9px] font-bold border transition-all ${selectedBranches.includes(b.branch) ? 'bg-[#111827] text-white border-[#111827]' : 'bg-white text-[#6B7280] border-[#E5E7EB]'}`}
-              >{b.branch}</button>
+                key={b}
+                onClick={() => setSelectedBranches(prev => prev.includes(b) ? prev.filter(x => x !== b) : [...prev, b])}
+                className={`px-2 py-0.5 text-[9px] font-bold border transition-all ${selectedBranches.includes(b) ? 'bg-[#111827] text-white border-[#111827]' : 'bg-white text-[#6B7280] border-[#E5E7EB]'}`}
+              >{b}</button>
             ))}
           </div>
         </div>
         <ResponsiveContainer width="100%" height={220}>
           <LineChart margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
-            <XAxis dataKey="week" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 9 }} data={branchWellnessTrend[0]?.data} />
+            <XAxis dataKey="week" type="category" allowDuplicatedCategory={false} tick={{ fontSize: 9 }} data={branchTrendSource[0]?.data} />
             <YAxis domain={[40, 90]} tick={{ fontSize: 9 }} />
             <Tooltip content={<CustomTooltip />} />
-            {branchWellnessTrend.filter(b => selectedBranches.includes(b.branch)).map(b => (
+            {branchTrendSource.filter(b => selectedBranches.includes(b.branch)).map(b => (
               <Line key={b.branch} data={b.data} type="monotone" dataKey="score" stroke={BRANCH_COLORS[b.branch]} strokeWidth={1.5} dot={false} name={b.branch} />
             ))}
           </LineChart>
@@ -122,10 +137,9 @@ export default function AcademicCorrelation() {
         <SectionHeader title="Evidence-Based Recommendations" />
         <div className="space-y-3">
           {[
+            ...(apiData?.recommendations || []),
             'Consider scheduling wellness workshops or de-stress events in the week before exams.',
             'Early-evening fitness events have historically maintained activity levels during exam weeks.',
-            'Mess menus during exam weeks should prioritize high-protein, easy-to-eat options (low skip rate).',
-            'Peer wellness ambassador programs in each hostel reduce mood crisis duration from 6 days to 2.',
           ].map((r, i) => (
             <div key={i} className="flex gap-3 p-3 border border-[#E5E7EB] bg-[#FAFAFA]">
               <span className="text-[9px] font-bold text-[#9CA3AF] shrink-0 mt-0.5">0{i + 1}</span>

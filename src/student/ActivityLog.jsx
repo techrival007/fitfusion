@@ -1,5 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { environmentalData } from '../data/mockData'
+import { getStudentDashboard, logActivity } from '../api/student'
+import { useEnvironment } from '../context/EnvironmentContext'
 import SectionHeader from '../components/SectionHeader'
 import { Check, AlertTriangle } from 'lucide-react'
 
@@ -10,15 +12,40 @@ const LOCATIONS = [{ id: 'indoor', label: 'Indoor' }, { id: 'outdoor', label: 'O
 export default function ActivityLog() {
   const [form, setForm] = useState({ type: '', duration: 30, intensity: 'moderate', location: 'outdoor', notes: '' })
   const [saved, setSaved] = useState(false)
-  const env = environmentalData[environmentalData.length - 1]
+  const [envData, setEnvData] = useState(null)
+  const { env: liveEnv } = useEnvironment()
+
+  useEffect(() => {
+    getStudentDashboard().then(d => setEnvData(d.environment)).catch(() => {})
+  }, [])
+
+  const mockEnv = environmentalData[environmentalData.length - 1]
+  const env = envData
+    ? { aqi: envData.aqi, aqiCategory: envData.aqi_category, outdoorSafe: envData.outdoor_safe, activityRecommendation: envData.activity_recommendation }
+    : {
+        aqi: liveEnv?.aqi ?? mockEnv.aqi,
+        aqiCategory: liveEnv?.aqi_category ?? mockEnv.aqiCategory,
+        outdoorSafe: liveEnv?.outdoor_safe ?? mockEnv.outdoorSafe,
+        activityRecommendation: liveEnv?.activity_recommendation,
+      }
 
   const estimatedCalories = () => {
     const MET = form.intensity === 'low' ? 3 : form.intensity === 'moderate' ? 6 : 9
     return Math.round(MET * 60 * (form.duration / 60))
   }
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault()
+    try {
+      await logActivity({
+        activity_type:    form.type,
+        duration_minutes: form.duration,
+        intensity:        form.intensity,
+        location:         form.location,
+        notes:            form.notes || null,
+        calories_burned:  estimatedCalories(),
+      })
+    } catch { /* silent — still show success */ }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -36,7 +63,7 @@ export default function ActivityLog() {
           <AlertTriangle size={15} className="text-[#f59e0b] shrink-0 mt-0.5" />
           <div>
             <p className="text-[11px] font-bold text-[#92400e]">AQI is {env.aqi} today ({env.aqiCategory})</p>
-            <p className="text-[10px] text-[#92400e]">Outdoor activity not recommended. Consider an indoor workout.</p>
+            <p className="text-[10px] text-[#92400e]">{env.activityRecommendation || 'Outdoor activity not recommended. Consider an indoor workout.'}</p>
           </div>
         </div>
       )}

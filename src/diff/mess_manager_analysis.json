@@ -1,0 +1,545 @@
+{
+  "generated_at": "2026-03-14T05:48:31.230571+00:00",
+  "database": {
+    "engine": "PostgreSQL",
+    "schema": "public",
+    "name": "univitals"
+  },
+  "global_summary": {
+    "table_count": 16,
+    "total_rows": 616608,
+    "role_counts": {
+      "dean": 1,
+      "mess_manager": 1,
+      "student": 1001,
+      "warden": 10
+    },
+    "hostel_type_counts": {
+      "boys": 5,
+      "girls": 5
+    },
+    "active_alert_count": 37,
+    "latest_environment": {
+      "recorded_at": "2026-03-13T08:00:00",
+      "aqi": 67,
+      "aqi_category": "Satisfactory",
+      "temperature_c": "20.7",
+      "humidity_percent": "69.1",
+      "uv_index": "7.9"
+    }
+  },
+  "role": "mess_manager",
+  "role_summary": {
+    "scope": "Campus mess operations context spanning meal quality, menu planning, and nutrient delivery.",
+    "accessible_tables": [
+      "food_items",
+      "mess_menu",
+      "nutrition_logs",
+      "mess_feedback_aggregate",
+      "users"
+    ],
+    "mess_kpis": {
+      "avg_rating_7d": "3.6974962483216176",
+      "meals_logged_today": 3188,
+      "avg_protein_30d": "16.742169156322316",
+      "avg_fibre_30d": "3.0480170418682717"
+    },
+    "menu_summary": {
+      "total_slots": 140,
+      "published_slots": 112,
+      "latest_week": 12
+    },
+    "top_feedback_tags": [
+      {
+        "meal_feedback_tag": "tasty",
+        "count": 56565
+      },
+      {
+        "meal_feedback_tag": "no_variety",
+        "count": 56300
+      },
+      {
+        "meal_feedback_tag": "bland",
+        "count": 56273
+      },
+      {
+        "meal_feedback_tag": "cold",
+        "count": 56246
+      },
+      {
+        "meal_feedback_tag": "undercooked",
+        "count": 56053
+      }
+    ],
+    "chat_ui": {
+      "title": "Mess Analytics Assistant",
+      "greeting": "Hello - I can explain meal ratings, nutrient gaps, menu quality, and mess participation using the latest database analysis.",
+      "suggestions": [
+        "Summarize mess performance",
+        "What nutrient gaps stand out?",
+        "Which meals are underperforming?",
+        "Suggest menu improvements"
+      ]
+    }
+  },
+  "relevant_tables": {
+    "food_items": {
+      "purpose": "Master catalog of food items and nutrient values used by the mess planner.",
+      "row_count": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "category",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "calories_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "protein_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "carbs_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "fat_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "fibre_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_veg",
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "true"
+        },
+        {
+          "name": "allergens",
+          "data_type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "food_items_pkey"
+      ],
+      "time_ranges": {}
+    },
+    "mess_menu": {
+      "purpose": "Stores planned and published mess menus with nutrient estimates.",
+      "row_count": 140,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "week_number",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "day_of_week",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "meal_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "food_items",
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "estimated_calories",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "estimated_protein",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_published",
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "false"
+        },
+        {
+          "name": "published_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "mess_menu_pkey"
+      ],
+      "time_ranges": {
+        "published_at": {
+          "min": null,
+          "max": null
+        }
+      }
+    },
+    "nutrition_logs": {
+      "purpose": "Captures meal-level nutrition intake, ratings, and mess feedback tags.",
+      "row_count": 281437,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "meal_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "food_items",
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_calories",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_protein",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_carbs",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_fat",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_fibre",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "meal_rating",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "meal_feedback_tag",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "idx_nl_date",
+        "idx_nl_meal",
+        "idx_nl_user",
+        "nutrition_logs_pkey"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": "2025-12-14",
+          "max": "2026-03-14"
+        }
+      }
+    },
+    "mess_feedback_aggregate": {
+      "purpose": "Stores aggregated mess feedback summaries by date and meal type.",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "meal_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "feedback_summary",
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "mess_feedback_aggregate_date_meal_type_key",
+        "mess_feedback_aggregate_pkey"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": null,
+          "max": null
+        }
+      }
+    },
+    "users": {
+      "purpose": "Stores all authenticated users including students, wardens, dean, and mess manager.",
+      "row_count": 1013,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "roll_number",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "email",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "password_hash",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "hostel_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "branch",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "academic_year",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "height_cm",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "weight_kg",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "fitness_level",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": "'beginner'::character varying"
+        },
+        {
+          "name": "dietary_preference",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "allergens",
+          "data_type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "role",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": "'student'::character varying"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "now()"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "hostel_id",
+          "references_table": "hostels",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "users_email_key",
+        "users_pkey",
+        "users_roll_number_key"
+      ],
+      "time_ranges": {
+        "created_at": {
+          "min": "2026-03-14T05:47:54.591961",
+          "max": "2026-03-14T05:47:54.920504"
+        }
+      }
+    }
+  }
+}

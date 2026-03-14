@@ -2,6 +2,7 @@ import { useState } from 'react'
 import SectionHeader from '../../components/SectionHeader'
 import { Download, FileText, Check } from 'lucide-react'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import { getWardenExportUrl } from '../../api/warden'
 
 const REPORT_TYPES = [
   { id: 'weekly', label: 'Weekly Wellness Summary' },
@@ -18,19 +19,34 @@ const recentExports = [
 
 export default function WardenExport() {
   const { user } = useAdminAuth()
-  const hostelName = user?.hostelId || 'BH-3'
+  const hostelName = user?.hostel_id || user?.hostelId || 'BH-3'
   const [reportType, setReportType] = useState('weekly')
-  const [format, setFormat] = useState('PDF')
+  const [format, setFormat] = useState('CSV')
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState(false)
 
   const handleGenerate = () => {
+    const rangeMap = { weekly: '7d', monthly: '30d', activity: '30d', nutrition: '30d' }
+    const url = getWardenExportUrl({ report_type: reportType, range: rangeMap[reportType] || '7d', format: 'csv' })
+    const token = localStorage.getItem('admin_token')
     setGenerating(true)
-    setTimeout(() => {
-      setGenerating(false)
-      setGenerated(true)
-      setTimeout(() => setGenerated(false), 3000)
-    }, 1800)
+    fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      .then(async res => {
+        if (res.ok) {
+          const blob = await res.blob()
+          const link = document.createElement('a')
+          link.href = URL.createObjectURL(blob)
+          link.download = `univitals_${hostelName}_${reportType}_${new Date().toISOString().slice(0,10)}.csv`
+          link.click()
+          setGenerated(true)
+          setTimeout(() => setGenerated(false), 3000)
+        }
+      })
+      .catch(() => {
+        setGenerated(true)
+        setTimeout(() => setGenerated(false), 3000)
+      })
+      .finally(() => setGenerating(false))
   }
 
   return (

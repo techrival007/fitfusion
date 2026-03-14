@@ -1,6 +1,8 @@
 import { academicCorrelationData, branchWellnessTrend, hostelCurrentScores } from '../../data/mockData'
+import { getWellnessTrends } from '../../api/dean'
 import SectionHeader from '../../components/SectionHeader'
 import InsightCard from '../../components/InsightCard'
+import { useState, useEffect } from 'react'
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, CartesianGrid
 } from 'recharts'
@@ -16,25 +18,59 @@ const CustomTooltip = ({ active, payload, label }) => {
 }
 
 export default function WellnessTrends() {
-  const semesterByWeek = Array.from({ length: 13 }, (_, wi) => {
-    const slice = academicCorrelationData.slice(wi * 7, (wi + 1) * 7)
-    const avg = slice.reduce((s, d) => s + d.wellnessScore, 0) / (slice.length || 1)
-    return { week: `W${wi + 1}`, score: Math.round(avg * 10) / 10 }
-  })
+  const [apiData, setApiData] = useState(null)
+  useEffect(() => { getWellnessTrends({ range: '90d' }).then(setApiData).catch(() => {}) }, [])
 
-  const branchRanking = branchWellnessTrend
-    .map(b => ({ branch: b.branch, score: b.avgScore }))
+  const semesterByWeek = apiData?.semester_trajectory
+    ? Array.from({ length: Math.ceil(apiData.semester_trajectory.length / 7) }, (_, wi) => {
+        const slice = apiData.semester_trajectory.slice(wi * 7, (wi + 1) * 7)
+        const avg = slice.reduce((s, d) => s + d.avg_score, 0) / (slice.length || 1)
+        return { week: `W${wi + 1}`, score: Math.round(avg * 10) / 10 }
+      })
+    : Array.from({ length: 13 }, (_, wi) => {
+        const slice = academicCorrelationData.slice(wi * 7, (wi + 1) * 7)
+        const avg = slice.reduce((s, d) => s + d.wellnessScore, 0) / (slice.length || 1)
+        return { week: `W${wi + 1}`, score: Math.round(avg * 10) / 10 }
+      })
+
+  const branchRanking = (apiData?.branch_ranking || branchWellnessTrend)
+    .map(b => ({ branch: b.branch, score: b.avg_score ?? b.avgScore }))
     .sort((a, b) => b.score - a.score)
 
-  const yearData = [
-    { year: '1st', wellness: 61.2, activity: 38, sleep: 6.2, nutrition: 75, mood: 3.0 },
-    { year: '2nd', wellness: 65.8, activity: 42, sleep: 6.6, nutrition: 78, mood: 3.3 },
-    { year: '3rd', wellness: 68.4, activity: 45, sleep: 6.8, nutrition: 80, mood: 3.5 },
-    { year: '4th', wellness: 64.1, activity: 40, sleep: 6.4, nutrition: 76, mood: 3.1 },
-  ]
+  const yearComparison = apiData?.year_comparison || {}
+  const yearData = Object.keys(yearComparison).length
+    ? ['year1', 'year2', 'year3', 'year4'].map((yearKey, index) => ({
+        year: `${index + 1}${index === 0 ? 'st' : index === 1 ? 'nd' : index === 2 ? 'rd' : 'th'}`,
+        wellness: yearComparison[yearKey]?.wellness ?? 0,
+        activity: yearComparison[yearKey]?.activity ?? 0,
+        sleep: yearComparison[yearKey]?.sleep ?? 0,
+        nutrition: yearComparison[yearKey]?.nutrition ?? 0,
+      }))
+    : [
+        { year: '1st', wellness: 61.2, activity: 38, sleep: 6.2, nutrition: 75, mood: 3.0 },
+        { year: '2nd', wellness: 65.8, activity: 42, sleep: 6.6, nutrition: 78, mood: 3.3 },
+        { year: '3rd', wellness: 68.4, activity: 45, sleep: 6.8, nutrition: 80, mood: 3.5 },
+        { year: '4th', wellness: 64.1, activity: 40, sleep: 6.4, nutrition: 76, mood: 3.1 },
+      ]
 
-  const boysAvg = hostelCurrentScores.filter(h => h.type === 'boys').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
-  const girlsAvg = hostelCurrentScores.filter(h => h.type === 'girls').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
+  const boysAvg = apiData?.gender_comparison?.boys?.wellness ?? hostelCurrentScores.filter(h => h.type === 'boys').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
+  const girlsAvg = apiData?.gender_comparison?.girls?.wellness ?? hostelCurrentScores.filter(h => h.type === 'girls').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
+  const genderCards = [
+    {
+      label: 'Boys Hostels (BH-1 – BH-5)',
+      avg: boysAvg,
+      activity: apiData?.gender_comparison?.boys?.activity ?? 38,
+      sleep: apiData?.gender_comparison?.boys?.sleep ?? 6.4,
+      type: 'boys',
+    },
+    {
+      label: 'Girls Hostels (GH-1 – GH-5)',
+      avg: girlsAvg,
+      activity: apiData?.gender_comparison?.girls?.activity ?? 42,
+      sleep: apiData?.gender_comparison?.girls?.sleep ?? 6.8,
+      type: 'girls',
+    },
+  ]
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -98,10 +134,7 @@ export default function WellnessTrends() {
 
       {/* Gender comparison */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {[
-          { label: 'Boys Hostels (BH-1 – BH-5)', avg: boysAvg, activity: 38, sleep: 6.4, type: 'boys' },
-          { label: 'Girls Hostels (GH-1 – GH-5)', avg: girlsAvg, activity: 42, sleep: 6.8, type: 'girls' },
-        ].map(g => (
+        {genderCards.map(g => (
           <div key={g.type} className="bg-white border border-[#E5E7EB] p-5">
             <p className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF] mb-3">{g.label}</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

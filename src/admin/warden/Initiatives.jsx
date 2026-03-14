@@ -1,34 +1,63 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { initiativesMock } from '../../data/mockData'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import { getWardenInitiatives, createInitiative as apiCreateInitiative } from '../../api/warden'
 import SectionHeader from '../../components/SectionHeader'
-import { Plus, Activity, Moon, Utensils, Check } from 'lucide-react'
+import { Plus, Activity, Moon, Utensils, Check, Brain } from 'lucide-react'
 
-const GOAL_ICONS = { activity: Activity, sleep: Moon, nutrition: Utensils }
-const GOAL_COLORS = { activity: '#111827', sleep: '#6B7280', nutrition: '#9CA3AF' }
+const GOAL_ICONS = { activity: Activity, sleep: Moon, nutrition: Utensils, mood: Brain }
+const GOAL_COLORS = { activity: '#111827', sleep: '#6B7280', nutrition: '#9CA3AF', mood: '#8b5cf6' }
+
+function normInitiative(i) {
+  return {
+    id:               i.id,
+    hostel:           i.hostel_name || i.hostel,
+    title:            i.title,
+    description:      i.description,
+    goalType:         i.goal_type || i.goalType,
+    target:           i.target_value || i.target,
+    startDate:        i.start_date || i.startDate,
+    endDate:          i.end_date || i.endDate,
+    participationRate: i.participationRate ?? null,
+    goalMetPct:       i.goalMetPct ?? null,
+  }
+}
 
 export default function Initiatives() {
   const { user } = useAdminAuth()
-  const hostelName = user?.hostelId || 'BH-3'
+  const hostelName = user?.hostel_id || user?.hostelId || 'BH-3'
   const [showForm, setShowForm] = useState(false)
   const [initiatives, setInitiatives] = useState(initiativesMock)
   const [form, setForm] = useState({ title: '', description: '', goalType: 'activity', target: '', startDate: '', endDate: '' })
   const [submitted, setSubmitted] = useState(false)
 
+  useEffect(() => {
+    getWardenInitiatives().then(resp => {
+      const all = [...(resp.active || []).map(normInitiative), ...(resp.past || []).map(normInitiative)]
+      if (all.length > 0) setInitiatives(all)
+    }).catch(() => {})
+  }, [])
+
   const active = initiatives.filter(i => !i.goalMetPct || new Date(i.endDate) > new Date())
   const past = initiatives.filter(i => i.goalMetPct !== null && new Date(i.endDate) <= new Date())
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const newInit = {
-      id: `i${Date.now()}`,
-      hostel: hostelName,
-      ...form,
-      target: parseFloat(form.target),
-      participationRate: null,
-      goalMetPct: null,
+    const payload = {
+      title: form.title, description: form.description,
+      goal_type: form.goalType, target_value: parseFloat(form.target),
+      start_date: form.startDate, end_date: form.endDate,
     }
-    setInitiatives(prev => [newInit, ...prev])
+    try {
+      const created = await apiCreateInitiative(payload)
+      setInitiatives(prev => [normInitiative(created), ...prev])
+    } catch {
+      const newInit = {
+        id: `i${Date.now()}`, hostel: hostelName, ...form,
+        target: parseFloat(form.target), participationRate: null, goalMetPct: null,
+      }
+      setInitiatives(prev => [newInit, ...prev])
+    }
     setSubmitted(true)
     setTimeout(() => { setShowForm(false); setSubmitted(false); setForm({ title: '', description: '', goalType: 'activity', target: '', startDate: '', endDate: '' }) }, 1500)
   }
@@ -116,7 +145,7 @@ export default function Initiatives() {
         ) : (
           <div className="space-y-3">
             {active.map(init => {
-              const Icon = GOAL_ICONS[init.goalType]
+              const Icon = GOAL_ICONS[init.goalType] || Activity
               return (
                 <div key={init.id} className="border border-[#E5E7EB] p-4">
                   <div className="flex items-start gap-3">

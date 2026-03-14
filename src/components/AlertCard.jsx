@@ -9,8 +9,13 @@ const severityConfig = {
 
 export default function AlertCard({ alert, onAcknowledge }) {
   const [acknowledged, setAcknowledged] = useState(!!alert.acknowledgedAt)
-  const cfg = severityConfig[alert.severity]
+  const cfg = severityConfig[alert.severity] || severityConfig.info
   const Icon = cfg.icon
+  const detail = alert.detail || alert.description
+  const triggeredAt = alert.triggeredAt || alert.triggered_at
+  const hostel = alert.hostel || alert.hostel_name
+  const metricValue = alert.metricValue ?? alert.metric_value
+  const threshold = alert.threshold ?? alert.threshold_value
 
   const handleAck = () => {
     setAcknowledged(true)
@@ -19,27 +24,27 @@ export default function AlertCard({ alert, onAcknowledge }) {
 
   return (
     <div
-      className="border p-4 font-mono transition-all"
-      style={{ borderColor: acknowledged ? '#E5E7EB' : cfg.border, backgroundColor: acknowledged ? '#FFFFFF' : cfg.bg }}
+      className={`alert-card border p-4 font-mono transition-all ${acknowledged ? 'is-ack' : ''}`}
+      data-severity={alert.severity}
     >
       <div className="flex items-start gap-3">
         <Icon size={16} style={{ color: cfg.color, flexShrink: 0, marginTop: 2 }} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 border" style={{ color: cfg.color, borderColor: cfg.border, backgroundColor: '#FFFFFF' }}>
+            <span className="alert-card-badge text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 border" style={{ color: cfg.color, borderColor: cfg.border }}>
               {cfg.label}
             </span>
-            {alert.hostel && (
-              <span className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF]">{alert.hostel}</span>
+            {hostel && (
+              <span className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF]">{hostel}</span>
             )}
-            <span className="text-[9px] text-[#9CA3AF] ml-auto">{alert.triggeredAt}</span>
+            <span className="text-[9px] text-[#9CA3AF] ml-auto">{triggeredAt}</span>
           </div>
           <p className="text-[12px] font-bold text-[#111827] mb-1">{alert.title}</p>
-          <p className="text-[11px] text-[#6B7280] leading-relaxed">{alert.detail}</p>
-          {alert.metricValue !== undefined && (
+          <p className="text-[11px] text-[#6B7280] leading-relaxed">{detail}</p>
+          {metricValue !== undefined && (
             <div className="flex items-center gap-3 mt-2 text-[10px] text-[#9CA3AF]">
-              <span>METRIC: <span className="text-[#111827] font-bold">{alert.metricValue}</span></span>
-              <span>THRESHOLD: <span className="text-[#111827] font-bold">{alert.threshold}</span></span>
+              <span>METRIC: <span className="text-[#111827] font-bold">{metricValue}</span></span>
+              <span>THRESHOLD: <span className="text-[#111827] font-bold">{threshold}</span></span>
             </div>
           )}
         </div>

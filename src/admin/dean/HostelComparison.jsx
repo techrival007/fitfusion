@@ -1,7 +1,8 @@
 import { hostelCurrentScores, hostelWellnessData, HOSTELS } from '../../data/mockData'
+import { getHostelComparison } from '../../api/dean'
 import SectionHeader from '../../components/SectionHeader'
 import InsightCard from '../../components/InsightCard'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, RadarChart, Radar, PolarGrid, PolarAngleAxis, Cell
 } from 'recharts'
@@ -21,16 +22,28 @@ const CustomTooltip = ({ active, payload, label }) => {
 export default function HostelComparison() {
   const [metric, setMetric] = useState('Wellness Score')
   const [selectedHostels, setSelectedHostels] = useState(['BH-1', 'GH-1', 'BH-3'])
+  const [apiData, setApiData] = useState(null)
 
-  const barData = [...hostelCurrentScores]
-    .sort((a, b) => b.weeklyAvgScore - a.weeklyAvgScore)
-    .map((h, i) => ({
-      name: h.name,
-      value: h.weeklyAvgScore,
-      colorGroup: i < 3 ? '#22c55e' : i < 7 ? '#9CA3AF' : '#f59e0b',
-    }))
+  const metricMap = {
+    'Wellness Score': 'wellness_score',
+    Activity: 'activity',
+    Nutrition: 'nutrition',
+    Sleep: 'sleep',
+    Mood: 'mood',
+    'Stress Level': 'mood',
+  }
 
-  const campusAvg = barData.reduce((s, d) => s + d.value, 0) / barData.length
+  useEffect(() => {
+    getHostelComparison({ metric: metricMap[metric] || 'wellness_score', range: '30d' }).then(setApiData).catch(() => {})
+  }, [metric])
+
+  const barData = (apiData?.bar_data || [...hostelCurrentScores].sort((a, b) => b.weeklyAvgScore - a.weeklyAvgScore)).map((h, i) => ({
+    name: h.hostel || h.name,
+    value: h.value ?? h.weeklyAvgScore,
+    colorGroup: i < 3 ? '#22c55e' : i < 7 ? '#9CA3AF' : '#f59e0b',
+  }))
+
+  const campusAvg = barData.reduce((s, d) => s + d.value, 0) / Math.max(barData.length, 1)
 
   const radarData = METRICS.slice(0, 5).map(m => {
     const entry = { metric: m.split(' ')[0] }
@@ -47,15 +60,24 @@ export default function HostelComparison() {
 
   const RADAR_COLORS = ['#111827', '#6B7280', '#9CA3AF']
 
-  const yearData = [
-    { year: '1st Year', wellness: 61, activity: 38, sleep: 6.2, nutrition: 75 },
-    { year: '2nd Year', wellness: 65, activity: 42, sleep: 6.6, nutrition: 78 },
-    { year: '3rd Year', wellness: 68, activity: 45, sleep: 6.8, nutrition: 80 },
-    { year: '4th Year', wellness: 64, activity: 40, sleep: 6.4, nutrition: 76 },
-  ]
+  const yearComparison = apiData?.year_breakdown || {}
+  const yearData = Object.entries(yearComparison).length
+    ? ['year1', 'year2', 'year3', 'year4'].map((key, idx) => ({
+        year: `${idx + 1}${idx === 0 ? 'st' : idx === 1 ? 'nd' : idx === 2 ? 'rd' : 'th'} Year`,
+        wellness: yearComparison[key]?.wellness ?? 0,
+        activity: yearComparison[key]?.activity ?? 0,
+        sleep: yearComparison[key]?.sleep ?? 0,
+        nutrition: yearComparison[key]?.nutrition ?? 0,
+      }))
+    : [
+        { year: '1st Year', wellness: 61, activity: 38, sleep: 6.2, nutrition: 75 },
+        { year: '2nd Year', wellness: 65, activity: 42, sleep: 6.6, nutrition: 78 },
+        { year: '3rd Year', wellness: 68, activity: 45, sleep: 6.8, nutrition: 80 },
+        { year: '4th Year', wellness: 64, activity: 40, sleep: 6.4, nutrition: 76 },
+      ]
 
-  const boysAvg = hostelCurrentScores.filter(h => h.type === 'boys').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
-  const girlsAvg = hostelCurrentScores.filter(h => h.type === 'girls').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
+  const boysAvg = apiData?.gender_comparison?.boys?.score ?? hostelCurrentScores.filter(h => h.type === 'boys').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
+  const girlsAvg = apiData?.gender_comparison?.girls?.score ?? hostelCurrentScores.filter(h => h.type === 'girls').reduce((s, h) => s + h.weeklyAvgScore, 0) / 5
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">

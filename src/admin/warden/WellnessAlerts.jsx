@@ -1,19 +1,47 @@
 import { adminAlerts } from '../../data/mockData'
 import { useAdminAuth } from '../../context/AdminAuthContext'
+import { getWardenAlerts, acknowledgeAlert } from '../../api/warden'
 import AlertCard from '../../components/AlertCard'
 import SectionHeader from '../../components/SectionHeader'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+function normAlert(a) {
+  return {
+    id:          a.id,
+    hostel:      a.hostel_name || a.hostel,
+    severity:    a.severity,
+    title:       a.title,
+    description: a.description,
+    triggeredAt: a.triggered_at || a.triggeredAt,
+    isActive:    a.is_active ?? a.isActive,
+    metricValue: a.metric_value ?? a.metricValue,
+    threshold:   a.threshold_value ?? a.threshold,
+  }
+}
 
 export default function WellnessAlerts() {
   const { user } = useAdminAuth()
-  const hostelName = user?.hostelId || 'BH-3'
+  const hostelName = user?.hostel_id || user?.hostelId || 'BH-3'
   const [filter, setFilter] = useState('all')
 
-  const hostelAlerts = adminAlerts.filter(a => a.hostel === hostelName || a.hostel === null)
-  const activeAlerts = hostelAlerts.filter(a => a.isActive)
-  const pastAlerts = hostelAlerts.filter(a => !a.isActive)
+  const mockHostelAlerts = adminAlerts.filter(a => a.hostel === hostelName || a.hostel === null)
+  const [activeAlerts, setActiveAlerts] = useState(mockHostelAlerts.filter(a => a.isActive))
+  const [pastAlerts, setPastAlerts]     = useState(mockHostelAlerts.filter(a => !a.isActive))
+
+  useEffect(() => {
+    getWardenAlerts().then((resp) => {
+      setActiveAlerts((resp.active || []).map(normAlert))
+      setPastAlerts((resp.history || []).map(normAlert))
+    }).catch(() => {})
+  }, [])
+
+  const handleAcknowledge = async (alertId) => {
+    try { await acknowledgeAlert(alertId) } catch {}
+    setActiveAlerts(prev => prev.filter(a => a.id !== alertId))
+  }
 
   const filtered = filter === 'all' ? activeAlerts : activeAlerts.filter(a => a.severity === filter)
+
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -44,7 +72,7 @@ export default function WellnessAlerts() {
         ) : (
           <div className="space-y-3">
             {filtered.map(alert => (
-              <AlertCard key={alert.id} alert={alert} />
+              <AlertCard key={alert.id} alert={alert} onAcknowledge={handleAcknowledge} />
             ))}
           </div>
         )}

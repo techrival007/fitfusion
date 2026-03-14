@@ -11,11 +11,12 @@ export default function StudentLogin() {
   const { login } = useStudentAuth()
   const navigate = useNavigate()
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    const result = login(rollNumber, password)
+    setError('')
+    const result = await login(rollNumber, password)
     if (result.success) navigate('/student')
-    else setError('Invalid credentials. Use: 2021EE10492 / student123')
+    else setError(result.error || 'Invalid credentials. Use: 2021EE10492 / student123')
   }
 
   const fillDemo = () => { setRollNumber('2021EE10492'); setPassword('student123'); setError('') }

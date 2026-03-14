@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SectionHeader from '../../components/SectionHeader'
 import { Download, Check, Shield } from 'lucide-react'
+import { generateReport } from '../../api/dean'
 
 const REPORT_TYPES = [
   { id: 'monthly', label: 'Monthly Wellness Summary', desc: 'All hostels, all metrics, one month' },
@@ -23,10 +24,22 @@ export default function GenerateReport() {
   const [format, setFormat] = useState('PDF')
   const [generating, setGenerating] = useState(false)
   const [generated, setGenerated] = useState(false)
+  const [startDate, setStartDate] = useState('2026-01-01')
+  const [endDate, setEndDate] = useState('2026-03-13')
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setGenerating(true)
-    setTimeout(() => { setGenerating(false); setGenerated(true); setTimeout(() => setGenerated(false), 4000) }, 2200)
+    const today = new Date().toISOString().slice(0, 10)
+    try {
+      const blob = await generateReport({ report_type: reportType, format, date_range: { start: startDate, end: endDate } })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(new Blob([blob]))
+      link.download = `univitals_campus_${reportType}_${today}.csv`
+      link.click()
+    } catch {}
+    setGenerating(false)
+    setGenerated(true)
+    setTimeout(() => setGenerated(false), 4000)
   }
 
   return (
@@ -74,8 +87,8 @@ export default function GenerateReport() {
             </select>
 
             <p className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF] mt-4 mb-2">Date Range</p>
-            <input type="date" defaultValue="2026-01-01" className="w-full border border-[#E5E7EB] px-3 py-2 text-[11px] text-[#111827] bg-[#FAFAFA] focus:outline-none focus:border-[#111827] font-mono mb-2" />
-            <input type="date" defaultValue="2026-03-13" className="w-full border border-[#E5E7EB] px-3 py-2 text-[11px] text-[#111827] bg-[#FAFAFA] focus:outline-none focus:border-[#111827] font-mono" />
+            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full border border-[#E5E7EB] px-3 py-2 text-[11px] text-[#111827] bg-[#FAFAFA] focus:outline-none focus:border-[#111827] font-mono mb-2" />
+            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full border border-[#E5E7EB] px-3 py-2 text-[11px] text-[#111827] bg-[#FAFAFA] focus:outline-none focus:border-[#111827] font-mono" />
 
             <div className="mt-4 border border-[#E5E7EB] bg-[#FAFAFA] p-3">
               <div className="flex gap-2 mb-1">

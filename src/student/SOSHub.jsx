@@ -11,10 +11,10 @@ const EMERGENCY_CONTACTS = [
 ]
 
 const TYPE_CONFIG = {
-  emergency: { color: '#ef4444', bg: '#fef2f2', border: '#fecaca', label: 'EMERGENCY' },
-  mental: { color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', label: 'MENTAL HEALTH' },
-  medical: { color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', label: 'MEDICAL' },
-  crisis: { color: '#8b5cf6', bg: '#f5f3ff', border: '#ddd6fe', label: 'CRISIS LINE' },
+  emergency: { color: '#ef4444', label: 'EMERGENCY' },
+  mental: { color: '#3b82f6', label: 'MENTAL HEALTH' },
+  medical: { color: '#f59e0b', label: 'MEDICAL' },
+  crisis: { color: '#8b5cf6', label: 'CRISIS LINE' },
 }
 
 const SELF_HELP = [
@@ -57,13 +57,13 @@ export default function SOSHub() {
       </div>
 
       {/* All contacts */}
-      <div className="bg-white border border-[#E5E7EB] p-5">
+      <div className="bg-[var(--surface-bg)] border border-[var(--border-main)] p-5">
         <p className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF] mb-4">All Contacts</p>
         <div className="space-y-3">
           {EMERGENCY_CONTACTS.map((c, i) => {
             const cfg = TYPE_CONFIG[c.type]
             return (
-              <div key={i} className="flex items-center gap-4 p-4 border transition-all hover:border-[#111827]" style={{ borderColor: cfg.border, backgroundColor: cfg.bg }}>
+              <div key={i} className="sos-contact-card flex items-center gap-4 p-4 border transition-all hover:border-[#111827]" data-contact-type={c.type}>
                 <div>
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[9px] font-bold uppercase tracking-widest" style={{ color: cfg.color }}>{cfg.label}</span>
@@ -86,11 +86,11 @@ export default function SOSHub() {
       </div>
 
       {/* Immediate self-help */}
-      <div className="bg-white border border-[#E5E7EB] p-5">
+      <div className="bg-[var(--surface-bg)] border border-[var(--border-main)] p-5">
         <p className="text-[9px] font-bold uppercase tracking-widest text-[#9CA3AF] mb-4">Immediate Self-Help Techniques</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {SELF_HELP.map(s => (
-            <div key={s.title} className="border border-[#E5E7EB] p-4 hover:border-[#111827] transition-all">
+            <div key={s.title} className="border border-[var(--border-main)] bg-[var(--surface-bg)] p-4 hover:border-[#111827] transition-all">
               <span className="text-[24px] block mb-2">{s.emoji}</span>
               <p className="text-[12px] font-bold text-[#111827] mb-1">{s.title}</p>
               <p className="text-[10px] text-[#6B7280] leading-relaxed">{s.desc}</p>

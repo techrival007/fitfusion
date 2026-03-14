@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { hostelWellnessData, nutrientRDA, macroTrend } from '../../data/mockData'
+import { getWardenNutrition } from '../../api/warden'
 import { useAdminAuth } from '../../context/AdminAuthContext'
 import NutrientGauge from '../../components/NutrientGauge'
 import InsightCard from '../../components/InsightCard'
@@ -20,25 +21,63 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 export default function NutritionReport() {
   const { user } = useAdminAuth()
-  const hostelName = user?.hostelId || 'BH-3'
-  const series = hostelWellnessData[hostelName].slice(-28)
+  const hostelName = user?.hostel_id || user?.hostelId || 'BH-3'
+  const mockSeries = hostelWellnessData[hostelName] || hostelWellnessData['BH-3'] || []
   const [range, setRange] = useState('28')
+  const [series, setSeries] = useState(() => mockSeries.slice(-28))
+  const [apiNutrients, setApiNutrients] = useState(null)
+  const [apiMealRatings, setApiMealRatings] = useState(null)
+  const [apiSkipRates, setApiSkipRates] = useState(null)
 
-  const mealSkipRates = [
+  useEffect(() => {
+    const rangeMap = { '7': '7d', '14': '14d', '28': '30d' }
+    getWardenNutrition({ range: rangeMap[range] || '30d' }).then(api => {
+      if (api.calorie_trend?.length > 0) {
+        setSeries(api.calorie_trend.map(d => ({ date: d.date, calories: d.avg_calories, n: d.n_logged })))
+      }
+      if (api.nutrient_gauges) setApiNutrients(api.nutrient_gauges)
+      if (api.mess_quality) {
+        setApiMealRatings(Object.entries(api.mess_quality).map(([meal, stats]) => ({
+          meal: meal.charAt(0).toUpperCase() + meal.slice(1),
+          rating: stats.avg_rating ?? 0,
+          trend: '+0.0',
+        })))
+      }
+      if (api.feedback_tags?.length) {
+        const total = api.feedback_tags.reduce((sum, item) => sum + item.count, 0) || 1
+        setApiSkipRates(api.feedback_tags.slice(0, 4).map((item) => ({
+          meal: item.tag,
+          skip: Math.round((item.count / total) * 100),
+          color: '#f59e0b',
+        })))
+      }
+    }).catch(() => {})
+  }, [range])
+
+  const mealSkipRates = apiSkipRates || [
     { meal: 'Breakfast', skip: 44, color: '#ef4444' },
     { meal: 'Lunch', skip: 22, color: '#f59e0b' },
     { meal: 'Snacks', skip: 38, color: '#ef4444' },
     { meal: 'Dinner', skip: 18, color: '#22c55e' },
   ]
 
-  const mealRatings = [
+  const mealRatings = apiMealRatings || [
     { meal: 'Breakfast', rating: 3.6, trend: '+0.2' },
     { meal: 'Lunch', rating: 3.4, trend: '-0.1' },
     { meal: 'Snacks', rating: 3.8, trend: '+0.3' },
     { meal: 'Dinner', rating: 3.1, trend: '-0.4' },
   ]
 
-  const calorieTrend = series.map(d => ({ date: d.date.slice(5), calories: d.calorieAvg }))
+  const calorieTrend = series.map(d => ({ date: d.date.slice(5), calories: d.calories ?? d.avg_calories ?? d.calorieAvg }))
+  const gauges = apiNutrients
+    ? {
+        calories: { avg: apiNutrients.calories.avg, rda: apiNutrients.calories.rda, unit: 'kcal' },
+        protein: { avg: apiNutrients.protein.avg, rda: apiNutrients.protein.rda, unit: 'g' },
+        carbs: { avg: apiNutrients.carbs.avg, rda: apiNutrients.carbs.rda, unit: 'g' },
+        fat: { avg: apiNutrients.fat.avg, rda: apiNutrients.fat.rda, unit: 'g' },
+        fibre: { avg: apiNutrients.fibre.avg, rda: apiNutrients.fibre.rda, unit: 'g' },
+      }
+    : nutrientRDA
 
   return (
     <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
@@ -105,7 +144,7 @@ export default function NutritionReport() {
       <div className="bg-white border border-[#E5E7EB] p-5">
         <SectionHeader title="Nutrient vs RDA" subtitle="Campus average vs recommended daily allowance" />
         <div>
-          {Object.entries(nutrientRDA).map(([key, v]) => (
+          {Object.entries(gauges).map(([key, v]) => (
             <NutrientGauge key={key} label={key.charAt(0).toUpperCase() + key.slice(1)} avg={v.avg} rda={v.rda} unit={v.unit} />
           ))}
         </div>

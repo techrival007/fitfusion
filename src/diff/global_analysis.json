@@ -1,0 +1,1517 @@
+{
+  "generated_at": "2026-03-14T05:48:31.230571+00:00",
+  "database": {
+    "engine": "PostgreSQL",
+    "schema": "public",
+    "name": "univitals"
+  },
+  "global_summary": {
+    "table_count": 16,
+    "total_rows": 616608,
+    "role_counts": {
+      "dean": 1,
+      "mess_manager": 1,
+      "student": 1001,
+      "warden": 10
+    },
+    "hostel_type_counts": {
+      "boys": 5,
+      "girls": 5
+    },
+    "active_alert_count": 37,
+    "latest_environment": {
+      "recorded_at": "2026-03-13T08:00:00",
+      "aqi": 67,
+      "aqi_category": "Satisfactory",
+      "temperature_c": "20.7",
+      "humidity_percent": "69.1",
+      "uv_index": "7.9"
+    }
+  },
+  "tables": {
+    "academic_events": {
+      "purpose": "Stores academic calendar events used to correlate wellness changes with exams and campus milestones.",
+      "row_count": 5,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "start_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "end_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "event_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "now()"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "created_by",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "academic_events_pkey"
+      ],
+      "time_ranges": {
+        "created_at": {
+          "min": "2026-03-14T05:48:12.630521",
+          "max": "2026-03-14T05:48:12.630521"
+        },
+        "start_date": {
+          "min": "2025-12-19",
+          "max": "2026-02-22"
+        },
+        "end_date": {
+          "min": "2025-12-21",
+          "max": "2026-02-28"
+        }
+      }
+    },
+    "activity_logs": {
+      "purpose": "Captures student exercise sessions, intensity, duration, calories, and indoor/outdoor location.",
+      "row_count": 60519,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "activity_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "duration_minutes",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "intensity",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "calories_burned",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "location",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "notes",
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "activity_logs_pkey",
+        "idx_al_date",
+        "idx_al_user"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": "2025-12-14",
+          "max": "2026-03-14"
+        }
+      }
+    },
+    "admin_alerts": {
+      "purpose": "Stores aggregated hostel-level alerts generated from sustained risk patterns.",
+      "row_count": 37,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "hostel_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "alert_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "severity",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "title",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "metric_value",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "threshold_value",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "triggered_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "now()"
+        },
+        {
+          "name": "acknowledged_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "acknowledged_by",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "action_note",
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_active",
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "true"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "acknowledged_by",
+          "references_table": "users",
+          "references_column": "id"
+        },
+        {
+          "column": "hostel_id",
+          "references_table": "hostels",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "admin_alerts_pkey"
+      ],
+      "time_ranges": {
+        "triggered_at": {
+          "min": "2026-01-03T00:00:00",
+          "max": "2026-02-27T00:00:00"
+        },
+        "acknowledged_at": {
+          "min": null,
+          "max": null
+        }
+      }
+    },
+    "environmental_snapshots": {
+      "purpose": "Persists campus environmental conditions including AQI, weather, and normalized source payloads.",
+      "row_count": 90,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "recorded_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "aqi",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "aqi_category",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "temperature_c",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "humidity_percent",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "weather_condition",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "uv_index",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "noise_level_db",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "outdoor_activity_safe",
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "real_feel_c",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "visibility_km",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "wind_kph",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "wind_gust_kph",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "pressure_mb",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "cloud_cover_pct",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "precip_1h_mm",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "precipitation_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sleep_risk_score",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "env_stress_score",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "source_payload",
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "environmental_snapshots_pkey",
+        "environmental_snapshots_recorded_at_key",
+        "idx_env_at"
+      ],
+      "time_ranges": {
+        "recorded_at": {
+          "min": "2025-12-14T08:00:00",
+          "max": "2026-03-13T08:00:00"
+        }
+      }
+    },
+    "food_items": {
+      "purpose": "Master catalog of food items and nutrient values used by the mess planner.",
+      "row_count": 30,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "category",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "calories_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "protein_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "carbs_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "fat_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "fibre_per_100g",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_veg",
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "true"
+        },
+        {
+          "name": "allergens",
+          "data_type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "food_items_pkey"
+      ],
+      "time_ranges": {}
+    },
+    "hostel_initiatives": {
+      "purpose": "Tracks warden-created wellness initiatives for each hostel.",
+      "row_count": 40,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "hostel_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_by",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "title",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "description",
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "goal_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "target_value",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "start_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "end_date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "now()"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "created_by",
+          "references_table": "users",
+          "references_column": "id"
+        },
+        {
+          "column": "hostel_id",
+          "references_table": "hostels",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "hostel_initiatives_pkey"
+      ],
+      "time_ranges": {
+        "created_at": {
+          "min": "2026-03-14T05:48:21.824759",
+          "max": "2026-03-14T05:48:21.824759"
+        },
+        "start_date": {
+          "min": "2026-01-28",
+          "max": "2026-03-12"
+        },
+        "end_date": {
+          "min": "2026-02-19",
+          "max": "2026-04-10"
+        }
+      }
+    },
+    "hostels": {
+      "purpose": "Defines hostel entities, type, capacity, and assigned warden.",
+      "row_count": 10,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": false,
+          "default": "nextval('hostels_id_seq'::regclass)"
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "capacity",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": "100"
+        },
+        {
+          "name": "warden_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "warden_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "hostels_pkey"
+      ],
+      "time_ranges": {}
+    },
+    "journal_entries": {
+      "purpose": "Stores encrypted student journal entries and word counts.",
+      "row_count": 10,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "entry_text",
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "word_count",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "now()"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "journal_entries_pkey"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": "2026-02-20",
+          "max": "2026-03-14"
+        },
+        "created_at": {
+          "min": "2026-02-20T21:00:00",
+          "max": "2026-03-14T21:00:00"
+        }
+      }
+    },
+    "mess_feedback_aggregate": {
+      "purpose": "Stores aggregated mess feedback summaries by date and meal type.",
+      "row_count": 0,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "meal_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "feedback_summary",
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "mess_feedback_aggregate_date_meal_type_key",
+        "mess_feedback_aggregate_pkey"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": null,
+          "max": null
+        }
+      }
+    },
+    "mess_menu": {
+      "purpose": "Stores planned and published mess menus with nutrient estimates.",
+      "row_count": 140,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "week_number",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "day_of_week",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "meal_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "food_items",
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "estimated_calories",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "estimated_protein",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "is_published",
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "false"
+        },
+        {
+          "name": "published_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "indexes": [
+        "mess_menu_pkey"
+      ],
+      "time_ranges": {
+        "published_at": {
+          "min": null,
+          "max": null
+        }
+      }
+    },
+    "mood_logs": {
+      "purpose": "Captures mood, stress, and energy check-ins from students.",
+      "row_count": 91091,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "time_of_day",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "mood_emoji",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "mood_score",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "energy_level",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "stress_level",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "mood_logs_pkey"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": "2025-12-14",
+          "max": "2026-03-14"
+        }
+      }
+    },
+    "nutrition_logs": {
+      "purpose": "Captures meal-level nutrition intake, ratings, and mess feedback tags.",
+      "row_count": 281437,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "meal_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "food_items",
+          "data_type": "jsonb",
+          "udt_name": "jsonb",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_calories",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_protein",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_carbs",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_fat",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "total_fibre",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "meal_rating",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "meal_feedback_tag",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "idx_nl_date",
+        "idx_nl_meal",
+        "idx_nl_user",
+        "nutrition_logs_pkey"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": "2025-12-14",
+          "max": "2026-03-14"
+        }
+      }
+    },
+    "sleep_logs": {
+      "purpose": "Captures sleep timing, duration, quality, and disruptions.",
+      "row_count": 91091,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "sleep_time",
+          "data_type": "time without time zone",
+          "udt_name": "time",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "wake_time",
+          "data_type": "time without time zone",
+          "udt_name": "time",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sleep_hours",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sleep_quality",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "disruptions",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "sleep_logs_pkey"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": "2025-12-14",
+          "max": "2026-03-14"
+        }
+      }
+    },
+    "users": {
+      "purpose": "Stores all authenticated users including students, wardens, dean, and mess manager.",
+      "row_count": 1013,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "name",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "roll_number",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "email",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "password_hash",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "hostel_id",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "branch",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "academic_year",
+          "data_type": "integer",
+          "udt_name": "int4",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "height_cm",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "weight_kg",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "fitness_level",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": "'beginner'::character varying"
+        },
+        {
+          "name": "dietary_preference",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "allergens",
+          "data_type": "ARRAY",
+          "udt_name": "_text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "role",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": "'student'::character varying"
+        },
+        {
+          "name": "created_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "now()"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "hostel_id",
+          "references_table": "hostels",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "users_email_key",
+        "users_pkey",
+        "users_roll_number_key"
+      ],
+      "time_ranges": {
+        "created_at": {
+          "min": "2026-03-14T05:47:54.591961",
+          "max": "2026-03-14T05:47:54.920504"
+        }
+      }
+    },
+    "wellness_logs": {
+      "purpose": "Stores daily computed wellness component scores for each student.",
+      "row_count": 91091,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "date",
+          "data_type": "date",
+          "udt_name": "date",
+          "nullable": false,
+          "default": null
+        },
+        {
+          "name": "wellness_score",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "activity_score",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "nutrition_score",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "mood_score",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "env_stress_score",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "sleep_hours",
+          "data_type": "double precision",
+          "udt_name": "float8",
+          "nullable": true,
+          "default": null
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "idx_wl_date",
+        "idx_wl_user",
+        "wellness_logs_pkey",
+        "wellness_logs_user_id_date_key"
+      ],
+      "time_ranges": {
+        "date": {
+          "min": "2025-12-14",
+          "max": "2026-03-14"
+        }
+      }
+    },
+    "wellness_nudges": {
+      "purpose": "Stores generated wellness nudges and acknowledgement state.",
+      "row_count": 4,
+      "columns": [
+        {
+          "name": "id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": false,
+          "default": "gen_random_uuid()"
+        },
+        {
+          "name": "user_id",
+          "data_type": "uuid",
+          "udt_name": "uuid",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "generated_at",
+          "data_type": "timestamp without time zone",
+          "udt_name": "timestamp",
+          "nullable": true,
+          "default": "now()"
+        },
+        {
+          "name": "nudge_type",
+          "data_type": "character varying",
+          "udt_name": "varchar",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "message",
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "trigger",
+          "data_type": "text",
+          "udt_name": "text",
+          "nullable": true,
+          "default": null
+        },
+        {
+          "name": "acknowledged",
+          "data_type": "boolean",
+          "udt_name": "bool",
+          "nullable": true,
+          "default": "false"
+        }
+      ],
+      "primary_key": [
+        "id"
+      ],
+      "foreign_keys": [
+        {
+          "column": "user_id",
+          "references_table": "users",
+          "references_column": "id"
+        }
+      ],
+      "indexes": [
+        "wellness_nudges_pkey"
+      ],
+      "time_ranges": {
+        "generated_at": {
+          "min": "2026-03-11T05:48:21.094225",
+          "max": "2026-03-14T05:48:21.091762"
+        }
+      }
+    }
+  }
+}

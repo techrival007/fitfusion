@@ -1,19 +1,33 @@
-import { useState } from 'react'
-import { todayMessMenu, FOOD_ITEMS } from '../data/mockData'
+import { useState, useEffect } from 'react'
+import { todayMessMenu } from '../data/mockData'
+import { getTodayMenu, logNutrition } from '../api/student'
 import SectionHeader from '../components/SectionHeader'
-import { Check, Plus, Minus } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 const MEALS = ['breakfast', 'lunch', 'snacks', 'dinner']
 const MEAL_LABELS = { breakfast: 'Breakfast', lunch: 'Lunch', snacks: 'Snacks', dinner: 'Dinner' }
-const MEAL_TIMES = { breakfast: '7:00 – 9:00 AM', lunch: '12:00 – 2:00 PM', snacks: '4:30 – 6:00 PM', dinner: '7:30 – 9:30 PM' }
-
-const PORTIONS = ['half', 'normal', 'double']
+const MEAL_TIMES  = { breakfast: '7:00 – 9:00 AM', lunch: '12:00 – 2:00 PM', snacks: '4:30 – 6:00 PM', dinner: '7:30 – 9:30 PM' }
+const TAG_OPTIONS = ['Tasty', 'Good', 'Okay', 'Cold', 'Bland', 'No variety', 'Too spicy', 'Too oily']
 
 export default function NutritionLog() {
-  const [logged, setLogged] = useState({})
-  const [ratings, setRatings] = useState({})
+  const [menu, setMenu]               = useState(null)
+  const [logged, setLogged]           = useState({})
+  const [ratings, setRatings]         = useState({})
   const [feedbackTags, setFeedbackTags] = useState({})
-  const [saved, setSaved] = useState(false)
+  const [saved, setSaved]             = useState(false)
+
+  useEffect(() => { getTodayMenu().then(setMenu).catch(() => {}) }, [])
+
+  const resolvedMenu = meal => {
+    if (menu && menu[meal]) {
+      return menu[meal].map(item =>
+        typeof item === 'string'
+          ? { name: item, cal: 0, protein: 0, carbs: 0, fat: 0 }
+          : { name: item.name ?? item, cal: item.calories_per_100g ?? item.cal ?? 0, protein: item.protein_per_100g ?? item.protein ?? 0, carbs: item.carbs_per_100g ?? item.carbs ?? 0, fat: item.fat_per_100g ?? item.fat ?? 0 }
+      )
+    }
+    return todayMessMenu[meal] || []
+  }
 
   const toggleItem = (meal, itemName) => {
     setLogged(prev => {
@@ -29,7 +43,7 @@ export default function NutritionLog() {
   const getTotals = () => {
     let cal = 0, protein = 0, carbs = 0, fat = 0
     Object.entries(logged).forEach(([meal, items]) => {
-      const menuItems = todayMessMenu[meal] || []
+      const menuItems = resolvedMenu(meal)
       Object.entries(items).forEach(([name, portion]) => {
         const item = menuItems.find(i => i.name === name)
         if (item) {
@@ -45,9 +59,30 @@ export default function NutritionLog() {
   }
 
   const totals = getTotals()
-  const TAG_OPTIONS = ['Tasty', 'Good', 'Okay', 'Cold', 'Bland', 'No variety', 'Too spicy', 'Too oily']
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    const promises = Object.entries(logged).map(([meal, items]) => {
+      const menuItems   = resolvedMenu(meal)
+      let cal = 0, protein = 0, carbs = 0, fat = 0
+      const foodList = Object.entries(items).map(([name, portion]) => {
+        const item = menuItems.find(i => i.name === name)
+        const mult = portion === 'half' ? 0.5 : portion === 'double' ? 2 : 1
+        if (item) { cal += item.cal * mult; protein += item.protein * mult; carbs += item.carbs * mult; fat += item.fat * mult }
+        return { name, portion }
+      })
+      return logNutrition({
+        meal_type:         meal,
+        food_items:        foodList,
+        total_calories:    Math.round(cal),
+        total_protein:     Math.round(protein),
+        total_carbs:       Math.round(carbs),
+        total_fat:         Math.round(fat),
+        total_fibre:       0,
+        meal_rating:       ratings[meal] || null,
+        meal_feedback_tag: feedbackTags[meal] || null,
+      })
+    })
+    try { await Promise.all(promises) } catch { /* silent */ }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
@@ -84,7 +119,7 @@ export default function NutritionLog() {
 
       {/* Meal sections */}
       {MEALS.map(meal => {
-        const items = todayMessMenu[meal] || []
+        const items = resolvedMenu(meal)
         const mealLogged = logged[meal] || {}
         const loggedCount = Object.keys(mealLogged).length
         return (

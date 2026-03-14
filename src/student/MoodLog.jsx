@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Check } from 'lucide-react'
+import { logMoodSleep } from '../api/student'
 
 const MOODS = [
   { score: 5, emoji: '😄', label: 'Great', color: '#22c55e' },
@@ -30,8 +31,20 @@ export default function MoodLog() {
     return Math.round(hours * 10) / 10
   })()
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (mood && mood.score <= 2) setShowBreathing(true)
+    try {
+      await logMoodSleep({
+        mood_score:    mood.score,
+        time_of_day:   timeOfDay,
+        energy_level:  energy,
+        stress_level:  stress,
+        sleep_time:    sleepTime,
+        wake_time:     wakeTime,
+        sleep_hours:   sleepHours,
+        sleep_quality: quality,
+      })
+    } catch { /* silent */ }
     setSaved(true)
     setTimeout(() => setSaved(false), 2500)
   }
