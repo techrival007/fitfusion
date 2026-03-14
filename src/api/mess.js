@@ -12,6 +12,9 @@ export const getMessNutrients = (params = {}) =>
 export const getMessMenu = (weekNumber) =>
   api.get("/api/admin/mess/menu", { params: { week_number: weekNumber } }).then((r) => r.data);
 
+export const getMessFoodItems = () =>
+  api.get("/api/admin/mess/food-items").then((r) => r.data);
+
 export const createMenuSlot = (body) =>
   api.post("/api/admin/mess/menu", body).then((r) => r.data);
 
